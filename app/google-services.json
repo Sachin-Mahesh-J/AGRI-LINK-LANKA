@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "602270262121",
+    "project_id": "agriscout-4586c",
+    "storage_bucket": "agriscout-4586c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602270262121:android:6de6f74da4ea7cfe8ed3f8",
+        "android_client_info": {
+          "package_name": "com.example.agriscout"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-Ovi5zlNUVXJ4lQM_tHYw3q1-re143eA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "id": "rice-blast",
+    "issueType": "DISEASE",
+    "issueName": "Rice Blast",
+    "crops": ["rice", "paddy"],
+    "symptomKeywords": ["diamond spots", "leaf spots", "neck rot", "gray center", "brown margin"],
+    "severityKeywords": ["spreading", "rapid", "severe", "high humidity"],
+    "treatment": "Remove severely infected leaves where practical and apply a locally approved triazole or strobilurin fungicide according to label guidance.",
+    "prevention": "Use resistant varieties, avoid excess nitrogen, improve field drainage, and scout after humid or rainy periods."
+  },
+  {
+    "id": "rice-brown-spot",
+    "issueType": "DISEASE",
+    "issueName": "Rice Brown Spot",
+    "crops": ["rice", "paddy"],
+    "symptomKeywords": ["brown spots", "oval spots", "yellow halo", "leaf drying"],
+    "severityKeywords": ["widespread", "dry", "nutrient stress"],
+    "treatment": "Correct nutrient deficiencies and use a registered fungicide if lesions are widespread.",
+    "prevention": "Use clean seed, balanced fertilization, and avoid drought stress."
+  },
+  {
+    "id": "maize-fall-armyworm",
+    "issueType": "PEST",
+    "issueName": "Fall Armyworm",
+    "crops": ["maize", "corn"],
+    "symptomKeywords": ["window panes", "frass", "whorl damage", "ragged leaves", "larvae"],
+    "severityKeywords": ["fresh frass", "many larvae", "severe"],
+    "treatment": "Use threshold-based control with recommended biological or selective insecticide treatment targeted into the whorl.",
+    "prevention": "Scout weekly during vegetative growth, conserve natural enemies, and remove volunteer host plants."
+  },
+  {
+    "id": "tomato-late-blight",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Late Blight",
+    "crops": ["tomato"],
+    "symptomKeywords": ["water soaked", "dark lesions", "white mold", "leaf blight", "stem lesions"],
+    "severityKeywords": ["cool wet", "rapid spread", "severe"],
+    "treatment": "Remove infected material and apply a registered protectant or systemic fungicide according to local guidance.",
+    "prevention": "Avoid overhead irrigation, increase spacing, remove crop debris, and monitor closely in cool wet weather."
+  },
+  {
+    "id": "tomato-early-blight",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Early Blight",
+    "crops": ["tomato"],
+    "symptomKeywords": ["concentric rings", "target spots", "yellow halo", "lower leaves"],
+    "severityKeywords": ["spreading", "defoliation"],
+    "treatment": "Remove infected lower leaves and apply a registered fungicide when lesions spread beyond the lower canopy.",
+    "prevention": "Rotate crops, mulch soil, improve airflow, and avoid wetting foliage during irrigation."
+  },
+  {
+    "id": "tomato-bacterial-spot",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Bacterial Spot",
+    "crops": ["tomato"],
+    "symptomKeywords": ["small dark spots", "yellow halo", "fruit spots", "leaf lesions"],
+    "severityKeywords": ["wet weather", "widespread"],
+    "treatment": "Use copper-based sprays where approved and remove heavily infected plants to reduce spread.",
+    "prevention": "Use certified seed, avoid working wet plants, and rotate with non-host crops."
+  },
+  {
+    "id": "tomato-leaf-mold",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Leaf Mold",
+    "crops": ["tomato"],
+    "symptomKeywords": ["yellow patches", "olive mold", "upper leaf yellow", "humid greenhouse"],
+    "severityKeywords": ["high humidity", "dense canopy"],
+    "treatment": "Improve ventilation and apply a registered fungicide if mold is spreading on upper leaves.",
+    "prevention": "Reduce humidity, increase spacing, prune lower leaves, and scout protected crops weekly."
+  },
+  {
+    "id": "tomato-septoria-leaf-spot",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Septoria Leaf Spot",
+    "crops": ["tomato"],
+    "symptomKeywords": ["small circular spots", "gray center", "dark border", "lower leaf drop"],
+    "severityKeywords": ["rain splash", "spreading"],
+    "treatment": "Remove infected lower leaves and apply protectant fungicide when spotting moves up the plant.",
+    "prevention": "Mulch, stake plants, rotate fields, and destroy old crop residue."
+  },
+  {
+    "id": "tomato-spider-mites",
+    "issueType": "PEST",
+    "issueName": "Tomato Spider Mites",
+    "crops": ["tomato"],
+    "symptomKeywords": ["stippling", "fine webbing", "bronze leaves", "mite colonies"],
+    "severityKeywords": ["hot dry", "dusty", "severe"],
+    "treatment": "Use threshold-based acaricide or approved biological control when mite colonies are visible on many leaves.",
+    "prevention": "Avoid drought stress, reduce dust, conserve predators, and scout during hot dry periods."
+  },
+  {
+    "id": "tomato-target-spot",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Target Spot",
+    "crops": ["tomato"],
+    "symptomKeywords": ["target-like rings", "brown lesions", "leaf spots", "fruit lesions"],
+    "severityKeywords": ["humid", "dense planting"],
+    "treatment": "Improve airflow and apply a registered fungicide if lesions spread to new leaves and fruit.",
+    "prevention": "Rotate crops, remove debris, avoid overhead irrigation, and maintain plant spacing."
+  },
+  {
+    "id": "tomato-yellow-leaf-curl-virus",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Yellow Leaf Curl Virus",
+    "crops": ["tomato"],
+    "symptomKeywords": ["upward curling", "yellow margins", "stunted growth", "whitefly"],
+    "severityKeywords": ["vector present", "young plants"],
+    "treatment": "Remove infected plants early and control whitefly vectors using approved methods.",
+    "prevention": "Use virus-free seedlings, install reflective mulches where practical, and monitor whitefly populations."
+  },
+  {
+    "id": "tomato-mosaic-virus",
+    "issueType": "DISEASE",
+    "issueName": "Tomato Mosaic Virus",
+    "crops": ["tomato"],
+    "symptomKeywords": ["mosaic pattern", "leaf distortion", "mottled leaves", "stunted plants"],
+    "severityKeywords": ["seed borne", "tool spread"],
+    "treatment": "Remove infected plants and disinfect tools; there is no cure once plants are infected.",
+    "prevention": "Use resistant varieties, certified seed, and sanitize hands and tools between plants."
+  },
+  {
+    "id": "potato-early-blight",
+    "issueType": "DISEASE",
+    "issueName": "Potato Early Blight",
+    "crops": ["potato"],
+    "symptomKeywords": ["concentric rings", "target spots", "brown lesions", "lower leaves"],
+    "severityKeywords": ["defoliation", "stress"],
+    "treatment": "Apply registered fungicide when lesions appear on middle canopy leaves and continue on a protective schedule.",
+    "prevention": "Rotate crops, maintain balanced nutrition, and remove infected debris after harvest."
+  },
+  {
+    "id": "potato-late-blight",
+    "issueType": "DISEASE",
+    "issueName": "Potato Late Blight",
+    "crops": ["potato"],
+    "symptomKeywords": ["water soaked", "dark lesions", "white sporulation", "rapid blight"],
+    "severityKeywords": ["cool wet", "epidemic"],
+    "treatment": "Destroy infected tubers and foliage where practical and apply blight fungicide immediately when active.",
+    "prevention": "Use certified seed, scout after rain, improve drainage, and destroy volunteer potatoes."
+  },
+  {
+    "id": "strawberry-leaf-scorch",
+    "issueType": "DISEASE",
+    "issueName": "Strawberry Leaf Scorch",
+    "crops": ["strawberry"],
+    "symptomKeywords": ["purple spots", "scorched margins", "leaf blight", "reddish lesions"],
+    "severityKeywords": ["wet foliage", "spreading"],
+    "treatment": "Remove heavily infected leaves and apply a registered fungicide if lesions spread across the bed.",
+    "prevention": "Use resistant cultivars where available, avoid overhead irrigation, and maintain bed sanitation."
+  },
+  {
+    "id": "wheat-rust",
+    "issueType": "DISEASE",
+    "issueName": "Wheat Rust",
+    "crops": ["wheat"],
+    "symptomKeywords": ["orange pustules", "rust pustules", "yellow stripes", "powdery spores"],
+    "severityKeywords": ["spreading", "upper leaves", "high"],
+    "treatment": "Apply a registered rust fungicide when active pustules appear on upper leaves and disease is spreading.",
+    "prevention": "Plant resistant varieties, destroy volunteer wheat, and monitor after humid weather."
+  },
+  {
+    "id": "general-nitrogen-deficiency",
+    "issueType": "NUTRIENT",
+    "issueName": "Nitrogen Deficiency",
+    "crops": ["all"],
+    "symptomKeywords": ["yellowing", "pale leaves", "stunted growth", "older leaves yellow"],
+    "severityKeywords": ["widespread", "poor growth"],
+    "treatment": "Confirm with field history or soil testing and apply nitrogen using local crop recommendations.",
+    "prevention": "Use soil tests, split fertilizer applications, and maintain organic matter."
+  }
+]

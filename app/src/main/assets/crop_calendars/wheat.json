@@ -1,0 +1,88 @@
+{
+  "cropId": "wheat",
+  "displayName": "Wheat",
+  "stages": [
+    {
+      "stage": "GERMINATION",
+      "dayRange": [0, 14],
+      "activities": [
+        {
+          "id": "wheat-basal-fertilizer",
+          "type": "FERTILIZER",
+          "title": "Basal fertilizer at sowing",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["NPK Compound", "Compost"],
+          "dosePerAcreKg": 40,
+          "unit": "kg",
+          "minSoilMoisture": 18,
+          "notes": "Apply at sowing or within first week."
+        }
+      ]
+    },
+    {
+      "stage": "VEGETATIVE",
+      "dayRange": [15, 55],
+      "activities": [
+        {
+          "id": "wheat-n-topdress",
+          "type": "FERTILIZER",
+          "title": "Tillering nitrogen top dressing",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea"],
+          "dosePerAcreKg": 30,
+          "unit": "kg",
+          "minSoilMoisture": 20,
+          "notes": "Apply during active tillering."
+        }
+      ]
+    },
+    {
+      "stage": "FLOWERING",
+      "dayRange": [56, 100],
+      "activities": [
+        {
+          "id": "wheat-rust-scout",
+          "type": "GROWTH_STAGE",
+          "title": "Scout for rust",
+          "productCategory": "Chemicals",
+          "preferredProducts": ["Triazole fungicide"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Inspect upper leaves after humid weather."
+        }
+      ]
+    },
+    {
+      "stage": "HARVEST_READY",
+      "dayRange": [101, 130],
+      "activities": [
+        {
+          "id": "wheat-harvest",
+          "type": "HARVEST",
+          "title": "Harvest when grain is hard",
+          "productCategory": "Equipment",
+          "preferredProducts": ["Combine harvester"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Harvest when grain moisture is suitable."
+        }
+      ]
+    }
+  ],
+  "diseaseWatchWindows": [
+    {
+      "issueId": "wheat-rust",
+      "stage": "FLOWERING",
+      "dayRange": [50, 100],
+      "triggerActivity": {
+        "id": "wheat-rust-treatment",
+        "type": "CHEMICAL",
+        "title": "Wheat rust treatment",
+        "productCategory": "Chemicals",
+        "preferredProducts": ["Triazole fungicide"],
+        "doseNote": "Apply registered rust fungicide when pustules spread on upper leaves."
+      }
+    }
+  ],
+  "harvestWindow": { "dayRange": [105, 125], "yieldPerAcreTonnesBaseline": 1.1 }
+}

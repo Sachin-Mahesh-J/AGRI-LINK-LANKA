@@ -1,0 +1,99 @@
+{
+  "cropId": "maize",
+  "displayName": "Maize / Corn",
+  "stages": [
+    {
+      "stage": "GERMINATION",
+      "dayRange": [0, 14],
+      "activities": [
+        {
+          "id": "maize-basal-fertilizer",
+          "type": "FERTILIZER",
+          "title": "Basal fertilizer at planting",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["NPK Compound", "Compost"],
+          "dosePerAcreKg": 45,
+          "unit": "kg",
+          "minSoilMoisture": 20,
+          "notes": "Place fertilizer below or beside the seed row according to local practice."
+        }
+      ]
+    },
+    {
+      "stage": "VEGETATIVE",
+      "dayRange": [15, 45],
+      "activities": [
+        {
+          "id": "maize-n-topdress",
+          "type": "FERTILIZER",
+          "title": "Side-dress nitrogen",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea", "Ammonium sulphate"],
+          "dosePerAcreKg": 35,
+          "unit": "kg",
+          "minSoilMoisture": 22,
+          "notes": "Apply when plants are knee-high. Scout weekly for fall armyworm."
+        },
+        {
+          "id": "maize-armyworm-scout",
+          "type": "GROWTH_STAGE",
+          "title": "Scout for fall armyworm",
+          "productCategory": "Chemicals",
+          "preferredProducts": ["Neem oil"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Check whorl for frass and larvae. Treat only above threshold."
+        }
+      ]
+    },
+    {
+      "stage": "FLOWERING",
+      "dayRange": [46, 85],
+      "activities": [
+        {
+          "id": "maize-flowering-irrigation",
+          "type": "IRRIGATION",
+          "title": "Critical flowering irrigation",
+          "productCategory": "",
+          "preferredProducts": [],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "minSoilMoisture": 30,
+          "notes": "Avoid moisture stress during tasseling and silking."
+        }
+      ]
+    },
+    {
+      "stage": "HARVEST_READY",
+      "dayRange": [86, 120],
+      "activities": [
+        {
+          "id": "maize-harvest",
+          "type": "HARVEST",
+          "title": "Harvest when kernels are hard",
+          "productCategory": "Equipment",
+          "preferredProducts": ["Combine harvester"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Harvest when moisture is suitable for storage or drying."
+        }
+      ]
+    }
+  ],
+  "diseaseWatchWindows": [
+    {
+      "issueId": "maize-fall-armyworm",
+      "stage": "VEGETATIVE",
+      "dayRange": [20, 55],
+      "triggerActivity": {
+        "id": "maize-armyworm-treatment",
+        "type": "CHEMICAL",
+        "title": "Fall armyworm treatment",
+        "productCategory": "Chemicals",
+        "preferredProducts": ["Neem oil"],
+        "doseNote": "Apply selective treatment into the whorl per local guidance."
+      }
+    }
+  ],
+  "harvestWindow": { "dayRange": [95, 115], "yieldPerAcreTonnesBaseline": 2.0 }
+}

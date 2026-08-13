@@ -1,0 +1,74 @@
+{
+  "cropId": "default",
+  "displayName": "General crop",
+  "stages": [
+    {
+      "stage": "GERMINATION",
+      "dayRange": [0, 14],
+      "activities": [
+        {
+          "id": "default-basal-fertilizer",
+          "type": "FERTILIZER",
+          "title": "Basal fertilizer at planting",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["NPK Compound", "Compost"],
+          "dosePerAcreKg": 40,
+          "unit": "kg",
+          "minSoilMoisture": 20,
+          "notes": "Apply balanced fertilizer at planting."
+        }
+      ]
+    },
+    {
+      "stage": "VEGETATIVE",
+      "dayRange": [15, 50],
+      "activities": [
+        {
+          "id": "default-vegetative-feed",
+          "type": "FERTILIZER",
+          "title": "Vegetative growth support",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea", "Compost"],
+          "dosePerAcreKg": 30,
+          "unit": "kg",
+          "minSoilMoisture": 22,
+          "notes": "Support active vegetative growth."
+        }
+      ]
+    },
+    {
+      "stage": "FLOWERING",
+      "dayRange": [51, 95],
+      "activities": [
+        {
+          "id": "default-flowering-scout",
+          "type": "GROWTH_STAGE",
+          "title": "Scout for pests and disease",
+          "productCategory": "Chemicals",
+          "preferredProducts": ["Neem oil"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Inspect crop twice weekly during reproductive growth."
+        }
+      ]
+    },
+    {
+      "stage": "HARVEST_READY",
+      "dayRange": [96, 140],
+      "activities": [
+        {
+          "id": "default-harvest",
+          "type": "HARVEST",
+          "title": "Plan harvest",
+          "productCategory": "Equipment",
+          "preferredProducts": ["Sickle"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Record maturity observations and coordinate harvest resources."
+        }
+      ]
+    }
+  ],
+  "diseaseWatchWindows": [],
+  "harvestWindow": { "dayRange": [100, 130], "yieldPerAcreTonnesBaseline": 1.0 }
+}

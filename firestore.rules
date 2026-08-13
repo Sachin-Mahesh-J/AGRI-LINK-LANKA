@@ -1,0 +1,1025 @@
+rules_version = '2';
+
+// Prototype rules for the AgriScout Android officer app and administrator ERP.
+// Roles are stored in userAccess/{uid}. A user may create only their own
+// field_officer record; only an existing active admin can change roles/status.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function hasAccessRecord(userId) {
+      return exists(/databases/$(database)/documents/userAccess/$(userId));
+    }
+
+    function isActiveOwner(userId) {
+      return owns(userId)
+        && hasAccessRecord(userId)
+        && get(/databases/$(database)/documents/userAccess/$(userId)).data.status == "active";
+    }
+
+    function isActiveUser() {
+      return signedIn()
+        && hasAccessRecord(request.auth.uid)
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.status == "active";
+    }
+
+    function isAssignedOfficer(userId, farmId) {
+      return isActiveUser()
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.role == "field_officer"
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.assignedFarmIds is list
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.assignedFarmIds
+          .hasAny(["users/" + userId + "/farms/" + farmId]);
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && hasAccessRecord(request.auth.uid)
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.status == "active"
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.role in ["admin", "super_admin"];
+    }
+
+    function validShortString(value, maxSize) {
+      return value is string && value.size() > 0 && value.size() <= maxSize;
+    }
+
+    function validOptionalString(data, field, maxSize) {
+      return !(field in data) || data[field] == null ||
+        (data[field] is string && data[field].size() <= maxSize);
+    }
+
+    function validOptionalNumber(data, field) {
+      return !(field in data) || data[field] == null || data[field] is number;
+    }
+
+    function validDateLike(value) {
+      return value is timestamp || value is number;
+    }
+
+    function validOptionalDate(data, field) {
+      return !(field in data) || data[field] == null || validDateLike(data[field]);
+    }
+
+    function validFarm(data) {
+      return data.keys().hasOnly([
+          "id", "farmName", "farmerName", "cropType", "locationText", "landSize",
+          "notes", "latitude", "longitude", "gpsAccuracyMeters", "gpsCapturedAt", "gpsSource",
+          "plantingDate", "assignedDeviceId", "assignedSensorDeviceId", "assignedCameraDeviceId",
+          "remotePhotoUrl", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validShortString(data.farmName, 120)
+        && validShortString(data.farmerName, 120)
+        && validShortString(data.cropType, 80)
+        && validShortString(data.locationText, 240)
+        && validOptionalString(data, "landSize", 80)
+        && validOptionalString(data, "notes", 4000)
+        && validOptionalNumber(data, "latitude")
+        && validOptionalNumber(data, "longitude")
+        && validOptionalNumber(data, "gpsAccuracyMeters")
+        && validOptionalDate(data, "gpsCapturedAt")
+        && validOptionalString(data, "gpsSource", 40)
+        && validOptionalDate(data, "plantingDate")
+        && validOptionalString(data, "assignedDeviceId", 128)
+        && validOptionalString(data, "assignedSensorDeviceId", 128)
+        && validOptionalString(data, "assignedCameraDeviceId", 128)
+        && validOptionalString(data, "remotePhotoUrl", 2048)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validReport(data) {
+      return data.keys().hasOnly([
+          "id", "farmId", "cropType", "symptoms", "severity", "estimatedYield",
+          "notes", "pestObservations", "growthStage", "cropConditionDetail",
+          "recommendedActions", "followUpNotes",
+          "latitude", "longitude", "gpsAccuracyMeters", "gpsCapturedAt", "gpsSource",
+          "remoteImageUrl", "issueType",
+          "detectedIssue", "detectionConfidence", "matchedRuleId", "recommendation",
+          "preventiveMeasures", "detectionUpdatedAt", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validShortString(data.farmId, 128)
+        && validShortString(data.cropType, 80)
+        && validShortString(data.symptoms, 4000)
+        && data.severity in ["Low", "Medium", "High", "Critical", "low", "medium", "high", "critical"]
+        && validOptionalString(data, "estimatedYield", 120)
+        && validOptionalString(data, "notes", 4000)
+        && validOptionalString(data, "pestObservations", 4000)
+        && validOptionalString(data, "growthStage", 80)
+        && validOptionalString(data, "cropConditionDetail", 2000)
+        && validOptionalString(data, "recommendedActions", 4000)
+        && validOptionalString(data, "followUpNotes", 4000)
+        && validOptionalNumber(data, "latitude")
+        && validOptionalNumber(data, "longitude")
+        && validOptionalNumber(data, "gpsAccuracyMeters")
+        && validOptionalDate(data, "gpsCapturedAt")
+        && validOptionalString(data, "gpsSource", 40)
+        && validOptionalString(data, "remoteImageUrl", 2048)
+        && validOptionalString(data, "issueType", 80)
+        && validOptionalString(data, "detectedIssue", 200)
+        && validOptionalNumber(data, "detectionConfidence")
+        && validOptionalString(data, "matchedRuleId", 128)
+        && validOptionalString(data, "recommendation", 6000)
+        && validOptionalString(data, "preventiveMeasures", 6000)
+        && validOptionalDate(data, "detectionUpdatedAt")
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validVisit(data) {
+      return data.keys().hasOnly([
+          "id", "farmId", "notes", "cropCondition", "cropConditionDetail",
+          "pestObservations", "growthStage", "recommendedActions", "followUpNotes",
+          "remotePhotoUrl", "latitude", "longitude", "gpsAccuracyMeters", "gpsCapturedAt",
+          "gpsSource", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validShortString(data.farmId, 128)
+        && validShortString(data.notes, 4000)
+        && validShortString(data.cropCondition, 80)
+        && validOptionalString(data, "cropConditionDetail", 2000)
+        && validOptionalString(data, "pestObservations", 4000)
+        && validOptionalString(data, "growthStage", 80)
+        && validOptionalString(data, "recommendedActions", 4000)
+        && validOptionalString(data, "followUpNotes", 4000)
+        && validOptionalString(data, "remotePhotoUrl", 2048)
+        && validOptionalNumber(data, "latitude")
+        && validOptionalNumber(data, "longitude")
+        && validOptionalNumber(data, "gpsAccuracyMeters")
+        && validOptionalDate(data, "gpsCapturedAt")
+        && validOptionalString(data, "gpsSource", 40)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validInventoryRequest(data) {
+      return data.keys().hasOnly([
+          "id", "farmId", "itemType", "inventoryItemId", "itemName", "quantity",
+          "reason", "status", "availableStock", "alternativeItem", "approvalNote",
+          "reviewedAt", "approvedAt", "issuedAt", "issuedQuantity", "createdAt",
+          "requestedAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validOptionalString(data, "farmId", 128)
+        && validShortString(data.itemType, 100)
+        && validOptionalString(data, "inventoryItemId", 128)
+        && validOptionalString(data, "itemName", 160)
+        && ((data.quantity is string && data.quantity.size() <= 80) || data.quantity is number)
+        && validShortString(data.reason, 2000)
+        && data.status in ["Pending", "Approved", "Rejected", "Issued", "pending", "approved", "rejected", "issued"]
+        && validOptionalNumber(data, "availableStock")
+        && validOptionalString(data, "alternativeItem", 240)
+        && validOptionalString(data, "approvalNote", 2000)
+        && validOptionalDate(data, "reviewedAt")
+        && validOptionalDate(data, "approvedAt")
+        && validOptionalDate(data, "issuedAt")
+        && validOptionalNumber(data, "issuedQuantity")
+        && validOptionalDate(data, "createdAt")
+        && validOptionalDate(data, "requestedAt")
+        && validOptionalDate(data, "updatedAt");
+    }
+
+    function validOfficerRequestCreate(data, requestId) {
+      return data.keys().hasOnly([
+          "id", "farmId", "itemType", "inventoryItemId", "itemName", "quantity",
+          "reason", "status", "availableStock", "alternativeItem", "createdAt",
+          "requestedAt", "updatedAt"
+        ])
+        && data.id == requestId
+        && data.status in ["Pending", "pending"]
+        && validInventoryRequest(data);
+    }
+
+    function validAdminRequestTransition() {
+      return (
+          resource.data.status in ["Pending", "pending"]
+          && request.resource.data.status in ["Approved", "Rejected", "approved", "rejected"]
+        ) || (
+          resource.data.status in ["Approved", "approved"]
+          && request.resource.data.status in ["Issued", "issued"]
+        );
+    }
+
+    function validReading(data) {
+      return data.keys().hasOnly([
+          "id", "farmId", "deviceId", "soilMoisturePercent", "temperatureCelsius",
+          "humidityPercent", "lightIntensityLux", "waterLevelPercent", "status",
+          "source", "recordedAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validShortString(data.farmId, 128)
+        && validOptionalString(data, "deviceId", 128)
+        && data.soilMoisturePercent is number
+        && data.temperatureCelsius is number
+        && data.humidityPercent is number
+        && data.lightIntensityLux is number
+        && data.waterLevelPercent is number
+        && data.status in ["Normal", "Warning", "Critical", "normal", "warning", "critical"]
+        && (!( "source" in data) || data.source in ["simulated", "device"])
+        && validDateLike(data.recordedAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validUserAccess(data) {
+      return data.keys().hasOnly([
+          "role", "status", "assignedFarmIds", "supplierId", "buyerId",
+          "createdAt", "updatedAt"
+        ])
+        && data.role in ["admin", "super_admin", "field_officer", "supplier", "buyer"]
+        && data.status in ["pending", "active", "inactive"]
+        && (!("assignedFarmIds" in data) ||
+          (data.assignedFarmIds is list && data.assignedFarmIds.size() <= 500))
+        && validOptionalString(data, "supplierId", 128)
+        && validOptionalString(data, "buyerId", 128)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function isSupplier() {
+      return isActiveUser()
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.role == "supplier";
+    }
+
+    function isBuyer() {
+      return isActiveUser()
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.role == "buyer";
+    }
+
+    function linkedSupplierId() {
+      return get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.supplierId;
+    }
+
+    function linkedBuyerId() {
+      return get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.buyerId;
+    }
+
+    function ownsSupplierProfile(supplierId) {
+      return isSupplier()
+        && linkedSupplierId() == supplierId
+        && exists(/databases/$(database)/documents/suppliers/$(supplierId))
+        && get(/databases/$(database)/documents/suppliers/$(supplierId)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/suppliers/$(supplierId)).data.status == "active";
+    }
+
+    function ownsBuyerProfile(buyerId) {
+      return isBuyer()
+        && linkedBuyerId() == buyerId
+        && exists(/databases/$(database)/documents/buyers/$(buyerId))
+        && get(/databases/$(database)/documents/buyers/$(buyerId)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/buyers/$(buyerId)).data.status == "active";
+    }
+
+    function isMarketplaceParticipant() {
+      return isAdmin() || isFieldOfficer() || isSupplier();
+    }
+
+    function isHarvestMarketplaceParticipant() {
+      return isAdmin() || isFieldOfficer() || isBuyer();
+    }
+
+    function validStaffProfile(data) {
+      return data.keys().hasOnly([
+          "displayName", "email", "phone", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.displayName, 120)
+        && validShortString(data.email, 254)
+        && validOptionalString(data, "phone", 40)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    match /userAccess/{userId} {
+      allow read: if owns(userId) || isAdmin();
+      allow create: if isAdmin() || (
+        owns(userId)
+        && request.resource.data.role == "field_officer"
+        && request.resource.data.status == "pending"
+        && validUserAccess(request.resource.data)
+      );
+      allow update: if isAdmin()
+        && validUserAccess(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          userId != request.auth.uid ||
+          (request.resource.data.role == resource.data.role &&
+            request.resource.data.status == resource.data.status)
+        );
+      allow delete: if isAdmin() && userId != request.auth.uid;
+    }
+
+    match /staffProfiles/{userId} {
+      allow read: if owns(userId) || isAdmin();
+      allow create: if (owns(userId) || isAdmin()) && validStaffProfile(request.resource.data);
+      allow update: if (owns(userId) || isAdmin())
+        && validStaffProfile(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId}/farms/{farmId} {
+      allow read: if isActiveOwner(userId) || isAssignedOfficer(userId, farmId) || isAdmin();
+      allow create: if (isActiveOwner(userId) || isAdmin()) && validFarm(request.resource.data);
+      allow update: if (isActiveOwner(userId) || isAdmin())
+        && validFarm(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isActiveOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/reports/{reportId} {
+      allow read: if isActiveOwner(userId) || isAdmin();
+      allow create: if isActiveOwner(userId) && validReport(request.resource.data);
+      allow update: if (isActiveOwner(userId) || isAdmin())
+        && validReport(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isActiveOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/farmVisits/{visitId} {
+      allow read: if isActiveOwner(userId) || isAdmin();
+      allow create: if isActiveOwner(userId) && validVisit(request.resource.data);
+      allow update: if (isActiveOwner(userId) || isAdmin())
+        && validVisit(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isActiveOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/inventoryRequests/{requestId} {
+      allow read: if isActiveOwner(userId) || isAdmin();
+      allow create: if isActiveOwner(userId)
+        && validOfficerRequestCreate(request.resource.data, requestId);
+      allow update: if validInventoryRequest(request.resource.data) && (
+        (isActiveOwner(userId)
+          && resource.data.status in ["Pending", "pending"]
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "farmId", "itemType", "inventoryItemId", "itemName", "quantity",
+            "reason", "availableStock", "alternativeItem", "updatedAt"
+          ]))
+        || (isAdmin() && validAdminRequestTransition())
+      );
+      allow delete: if isAdmin()
+        || (isActiveOwner(userId) && resource.data.status in ["Pending", "pending"]);
+    }
+
+    match /users/{userId}/sensorReadings/{readingId} {
+      allow read: if isActiveOwner(userId) || isAdmin();
+      allow create: if isActiveOwner(userId) && validReading(request.resource.data);
+      allow update: if isActiveOwner(userId)
+        && validReading(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.recordedAt == resource.data.recordedAt;
+      allow delete: if isActiveOwner(userId) || isAdmin();
+    }
+
+    match /users/{userId}/cameraCaptures/{captureId} {
+      allow read: if isActiveOwner(userId) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId}/devices/{token} {
+      allow read, delete: if isActiveOwner(userId) || isAdmin();
+      allow create, update: if isActiveOwner(userId)
+        && request.resource.data.keys().hasOnly(["token", "platform", "updatedAt", "enabled"])
+        && request.resource.data.token == token
+        && request.resource.data.platform == "android"
+        && request.resource.data.enabled is bool
+        && validDateLike(request.resource.data.updatedAt);
+    }
+
+    // Recursive read rules are required for administrator collection-group queries.
+    match /{path=**}/farms/{documentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/reports/{documentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/farmVisits/{documentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/inventoryRequests/{documentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/sensorReadings/{documentId} {
+      allow read: if isAdmin();
+    }
+    match /{path=**}/cameraCaptures/{documentId} {
+      allow read: if isAdmin();
+    }
+
+    function validInventoryItem(data) {
+      return data.keys().hasOnly([
+          "name", "category", "sku", "quantity", "reorderLevel", "unit",
+          "supplierId", "expiryDate", "equipmentStatus", "alternativeItemIds",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.name, 160)
+        && data.category in ["Fertilizers", "Chemicals", "Seeds", "Equipment", "Other"]
+        && validOptionalString(data, "sku", 80)
+        && data.quantity is number && data.quantity >= 0
+        && data.reorderLevel is number && data.reorderLevel >= 0
+        && validShortString(data.unit, 40)
+        && validOptionalString(data, "supplierId", 128)
+        && validOptionalDate(data, "expiryDate")
+        && validOptionalString(data, "equipmentStatus", 80)
+        && (!("alternativeItemIds" in data) ||
+          (data.alternativeItemIds is list && data.alternativeItemIds.size() <= 50))
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validSupplier(data) {
+      return data.keys().hasOnly([
+          "name", "contactName", "email", "phone", "address", "status",
+          "uid", "approvalNote", "verifiedAt", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.name, 160)
+        && validOptionalString(data, "contactName", 120)
+        && validOptionalString(data, "email", 254)
+        && validOptionalString(data, "phone", 40)
+        && validOptionalString(data, "address", 500)
+        && data.status in ["pending", "active", "inactive", "rejected"]
+        && validOptionalString(data, "uid", 128)
+        && validOptionalString(data, "approvalNote", 2000)
+        && validOptionalDate(data, "verifiedAt")
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validSupplierProduct(data) {
+      return data.keys().hasOnly([
+          "supplierId", "supplierName", "name", "category", "cropSuitability",
+          "description", "unit", "packSize", "price", "availabilityStatus",
+          "active", "verified", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.supplierId, 128)
+        && validShortString(data.supplierName, 160)
+        && validShortString(data.name, 160)
+        && data.category in [
+          "Fertilizers", "Chemicals", "Seeds", "Equipment", "Other", "Irrigation"
+        ]
+        && (!("cropSuitability" in data) ||
+          (data.cropSuitability is list && data.cropSuitability.size() <= 40))
+        && validOptionalString(data, "description", 4000)
+        && validShortString(data.unit, 40)
+        && validOptionalString(data, "packSize", 80)
+        && (!( "price" in data) || data.price == null || data.price is number)
+        && data.availabilityStatus in ["available", "limited", "out_of_stock"]
+        && data.active is bool
+        && data.verified is bool
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validProductRequest(data) {
+      return data.keys().hasOnly([
+          "officerUid", "farmId", "farmPath", "recommendationId",
+          "productCategory", "supplierProductId", "supplierId", "productName",
+          "supplierName", "quantity", "unit", "issueSignal", "agriculturalNeed",
+          "recommendedAction", "rationale", "status", "supplierNote", "adminNote",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.officerUid, 128)
+        && validOptionalString(data, "farmId", 128)
+        && validOptionalString(data, "farmPath", 500)
+        && validOptionalString(data, "recommendationId", 128)
+        && validShortString(data.productCategory, 80)
+        && validShortString(data.supplierProductId, 128)
+        && validShortString(data.supplierId, 128)
+        && validShortString(data.productName, 160)
+        && validShortString(data.supplierName, 160)
+        && ((data.quantity is string && data.quantity.size() <= 80) || data.quantity is number)
+        && validOptionalString(data, "unit", 40)
+        && validOptionalString(data, "issueSignal", 500)
+        && validOptionalString(data, "agriculturalNeed", 500)
+        && validOptionalString(data, "recommendedAction", 1000)
+        && validOptionalString(data, "rationale", 2000)
+        && data.status in [
+          "created", "reviewed", "accepted", "rejected",
+          "preparing", "dispatched", "delivered", "cancelled"
+        ]
+        && validOptionalString(data, "supplierNote", 2000)
+        && validOptionalString(data, "adminNote", 2000)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validOfficerProductRequestCreate(data) {
+      return isFieldOfficer()
+        && data.officerUid == request.auth.uid
+        && data.status == "created"
+        && validProductRequest(data);
+    }
+
+    function validSupplierRequestUpdate() {
+      return ownsSupplierProfile(resource.data.supplierId)
+        && request.resource.data.officerUid == resource.data.officerUid
+        && request.resource.data.supplierId == resource.data.supplierId
+        && request.resource.data.supplierProductId == resource.data.supplierProductId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in [
+          "reviewed", "accepted", "rejected", "preparing", "dispatched", "delivered", "cancelled"
+        ]
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["status", "supplierNote", "updatedAt"]);
+    }
+
+    function validAssignment(data) {
+      return data.keys().hasOnly([
+          "farmPath", "farmId", "officerUid", "active", "assignedAt", "updatedAt"
+        ])
+        && validShortString(data.farmPath, 500)
+        && validShortString(data.farmId, 128)
+        && validShortString(data.officerUid, 128)
+        && data.active is bool
+        && validDateLike(data.assignedAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validDevice(data) {
+      return data.keys().hasOnly([
+          "name", "deviceId", "deviceType", "farmPath", "farmId", "officerUid", "status",
+          "lastSeen", "lastReadingAt", "lastCaptureAt", "sensorTypes", "firmwareVersion", "faultStatus",
+          "ingestKey", "batteryPercent", "signalStrength",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.name, 160)
+        && validShortString(data.deviceId, 128)
+        && validOptionalString(data, "deviceType", 32)
+        && validOptionalString(data, "farmPath", 500)
+        && validOptionalString(data, "farmId", 128)
+        && validOptionalString(data, "officerUid", 128)
+        && data.status in ["online", "offline", "maintenance", "inactive", "active"]
+        && validOptionalDate(data, "lastSeen")
+        && validOptionalDate(data, "lastReadingAt")
+        && validOptionalDate(data, "lastCaptureAt")
+        && data.sensorTypes is list && data.sensorTypes.size() <= 20
+        && validOptionalString(data, "firmwareVersion", 80)
+        && validOptionalString(data, "faultStatus", 240)
+        && validOptionalString(data, "ingestKey", 128)
+        && validOptionalNumber(data, "batteryPercent")
+        && validOptionalNumber(data, "signalStrength")
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validCameraCapture(data) {
+      return data.keys().hasOnly([
+          "id", "deviceId", "farmId", "storagePath", "imageUrl", "capturedAt",
+          "resolution", "fileSize", "aiProcessed", "diseaseDetected", "confidence",
+          "detectedIssue", "source", "pipelineRecommendationId", "createdAt", "updatedAt"
+        ])
+        && validShortString(data.id, 128)
+        && validShortString(data.deviceId, 128)
+        && validShortString(data.farmId, 128)
+        && validOptionalString(data, "storagePath", 500)
+        && validOptionalString(data, "imageUrl", 2000)
+        && validDateLike(data.capturedAt)
+        && validOptionalString(data, "resolution", 32)
+        && validOptionalNumber(data, "fileSize")
+        && (!( "aiProcessed" in data) || data.aiProcessed is bool)
+        && validOptionalString(data, "diseaseDetected", 240)
+        && validOptionalNumber(data, "confidence")
+        && validOptionalString(data, "detectedIssue", 240)
+        && validOptionalString(data, "source", 32)
+        && validOptionalString(data, "pipelineRecommendationId", 128)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validAlert(data) {
+      return data.keys().hasOnly([
+          "title", "message", "severity", "status", "farmPath", "deviceId",
+          "source", "createdAt", "updatedAt", "resolvedAt"
+        ])
+        && validShortString(data.title, 200)
+        && validShortString(data.message, 4000)
+        && data.severity in ["low", "medium", "high", "critical"]
+        && data.status in ["open", "resolved"]
+        && validOptionalString(data, "farmPath", 500)
+        && validOptionalString(data, "deviceId", 128)
+        && validOptionalString(data, "source", 80)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt)
+        && validOptionalDate(data, "resolvedAt");
+    }
+
+    function isFieldOfficer() {
+      return isActiveUser()
+        && get(/databases/$(database)/documents/userAccess/$(request.auth.uid)).data.role == "field_officer";
+    }
+
+    function validRecommendation(data) {
+      return data.keys().hasOnly([
+          "title", "message", "priority", "type", "farmPath", "officerUid",
+          "suggestedItemName", "alternativeItemName", "source", "activityId",
+          "stage", "dayOfSeason", "suggestedQuantity", "quantityUnit",
+          "activityStatus", "confidence", "issueSignal", "agriculturalNeed",
+          "recommendedAction", "productCategory", "rationale",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.title, 200)
+        && validShortString(data.message, 4000)
+        && data.priority in ["low", "medium", "high", "critical"]
+        && data.type in [
+          "IRRIGATION", "FERTILIZER", "PEST_CONTROL", "CHEMICAL", "HARVEST",
+          "RISK_ALERT", "GROWTH_STAGE"
+        ]
+        && validShortString(data.farmPath, 500)
+        && validShortString(data.officerUid, 128)
+        && validOptionalString(data, "suggestedItemName", 200)
+        && validOptionalString(data, "alternativeItemName", 200)
+        && validOptionalString(data, "source", 80)
+        && validOptionalString(data, "activityId", 128)
+        && validOptionalString(data, "stage", 80)
+        && validOptionalNumber(data, "dayOfSeason")
+        && validOptionalNumber(data, "suggestedQuantity")
+        && validOptionalString(data, "quantityUnit", 40)
+        && validOptionalString(data, "activityStatus", 80)
+        && validOptionalNumber(data, "confidence")
+        && validOptionalString(data, "issueSignal", 500)
+        && validOptionalString(data, "agriculturalNeed", 500)
+        && validOptionalString(data, "recommendedAction", 1000)
+        && validOptionalString(data, "productCategory", 80)
+        && validOptionalString(data, "rationale", 2000)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function officerOwnsRecommendation(data) {
+      return isFieldOfficer()
+        && data.officerUid == request.auth.uid
+        && data.farmPath.matches('^users/' + request.auth.uid + '/farms/[^/]+$');
+    }
+
+    match /inventoryItems/{itemId} {
+      allow read: if isActiveUser();
+      allow create: if isAdmin() && validInventoryItem(request.resource.data);
+      allow update: if isAdmin()
+        && validInventoryItem(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /suppliers/{supplierId} {
+      allow read: if isAdmin()
+        || (isSupplier() && resource.data.uid == request.auth.uid)
+        || (isFieldOfficer() && resource.data.status == "active");
+      allow create: if isAdmin() && validSupplier(request.resource.data);
+      allow update: if validSupplier(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          isAdmin()
+          || (
+            ownsSupplierProfile(supplierId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(["contactName", "email", "phone", "address", "updatedAt"])
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.uid == resource.data.uid
+            && request.resource.data.name == resource.data.name
+          )
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /supplierProducts/{productId} {
+      allow read: if isMarketplaceParticipant() && (
+        isAdmin()
+        || ownsSupplierProfile(resource.data.supplierId)
+        || (isFieldOfficer() && resource.data.active == true && resource.data.verified == true)
+      );
+      allow create: if validSupplierProduct(request.resource.data) && (
+        isAdmin()
+        || (
+          ownsSupplierProfile(request.resource.data.supplierId)
+          && request.resource.data.verified == false
+        )
+      );
+      allow update: if validSupplierProduct(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.supplierId == resource.data.supplierId
+        && (
+          isAdmin()
+          || (
+            ownsSupplierProfile(resource.data.supplierId)
+            && request.resource.data.verified == resource.data.verified
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly([
+                "name", "category", "cropSuitability", "description", "unit",
+                "packSize", "price", "availabilityStatus", "active", "supplierName",
+                "updatedAt"
+              ])
+          )
+        );
+      allow delete: if isAdmin() || ownsSupplierProfile(resource.data.supplierId);
+    }
+
+    match /productRequests/{requestId} {
+      allow read: if isAdmin()
+        || (isFieldOfficer() && resource.data.officerUid == request.auth.uid)
+        || ownsSupplierProfile(resource.data.supplierId);
+      allow create: if validOfficerProductRequestCreate(request.resource.data);
+      allow update: if validProductRequest(request.resource.data) && (
+        isAdmin()
+        || validSupplierRequestUpdate()
+        || (
+          isFieldOfficer()
+          && resource.data.officerUid == request.auth.uid
+          && resource.data.status == "created"
+          && request.resource.data.status == "cancelled"
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["status", "updatedAt"])
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    function validBuyer(data) {
+      return data.keys().hasOnly([
+          "name", "contactName", "email", "phone", "address",
+          "organizationType", "status", "uid", "approvalNote", "verifiedAt",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.name, 160)
+        && validOptionalString(data, "contactName", 120)
+        && validOptionalString(data, "email", 254)
+        && validOptionalString(data, "phone", 40)
+        && validOptionalString(data, "address", 500)
+        && data.organizationType in [
+          "wholesaler", "supermarket", "exporter", "food_processor",
+          "juice_manufacturer", "hotel", "restaurant", "other"
+        ]
+        && data.status in ["pending", "active", "inactive", "rejected"]
+        && validOptionalString(data, "uid", 128)
+        && validOptionalString(data, "approvalNote", 2000)
+        && validOptionalDate(data, "verifiedAt")
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validHarvestListing(data) {
+      return data.keys().hasOnly([
+          "farmId", "farmPath", "farmName", "officerUid", "cropType",
+          "locationText", "district", "estimatedQuantityMin", "estimatedQuantityMax",
+          "quantityUnit", "harvestWindowStartDay", "harvestWindowEndDay",
+          "harvestPeriodLabel", "qualityNote", "confidence", "reliabilityLabel",
+          "predictionSource", "sourceRecommendationId", "listingOrigin",
+          "status", "visibility", "active", "verified", "adminNote",
+          "createdAt", "updatedAt"
+        ])
+        && validOptionalString(data, "farmId", 128)
+        && validOptionalString(data, "farmPath", 500)
+        && validOptionalString(data, "farmName", 160)
+        && validOptionalString(data, "officerUid", 128)
+        && validShortString(data.cropType, 80)
+        && validOptionalString(data, "locationText", 240)
+        && validOptionalString(data, "district", 120)
+        && validOptionalNumber(data, "estimatedQuantityMin")
+        && validOptionalNumber(data, "estimatedQuantityMax")
+        && validOptionalString(data, "quantityUnit", 40)
+        && validOptionalNumber(data, "harvestWindowStartDay")
+        && validOptionalNumber(data, "harvestWindowEndDay")
+        && validOptionalString(data, "harvestPeriodLabel", 120)
+        && validOptionalString(data, "qualityNote", 2000)
+        && validOptionalNumber(data, "confidence")
+        && validOptionalString(data, "reliabilityLabel", 40)
+        && validOptionalString(data, "predictionSource", 80)
+        && validOptionalString(data, "sourceRecommendationId", 128)
+        && data.listingOrigin in ["prediction", "manual_confirm"]
+        && data.status in [
+          "draft", "listed", "reserved", "completed", "cancelled", "hidden"
+        ]
+        && data.visibility in ["public", "hidden"]
+        && data.active is bool
+        && data.verified is bool
+        && validOptionalString(data, "adminNote", 2000)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validHarvestRequest(data) {
+      return data.keys().hasOnly([
+          "harvestListingId", "buyerId", "buyerUid", "buyerName",
+          "farmId", "farmPath", "farmName", "cropType",
+          "requestedQuantity", "quantityUnit", "message", "status",
+          "buyerNote", "adminNote", "officerNote",
+          "createdAt", "updatedAt"
+        ])
+        && validShortString(data.harvestListingId, 128)
+        && validShortString(data.buyerId, 128)
+        && validOptionalString(data, "buyerUid", 128)
+        && validOptionalString(data, "buyerName", 160)
+        && validOptionalString(data, "farmId", 128)
+        && validOptionalString(data, "farmPath", 500)
+        && validOptionalString(data, "farmName", 160)
+        && validOptionalString(data, "cropType", 80)
+        && ((data.requestedQuantity is string && data.requestedQuantity.size() <= 80)
+          || data.requestedQuantity is number)
+        && validOptionalString(data, "quantityUnit", 40)
+        && validOptionalString(data, "message", 2000)
+        && data.status in [
+          "interested", "requested", "under_review", "accepted", "rejected",
+          "negotiated", "reserved", "completed", "cancelled"
+        ]
+        && validOptionalString(data, "buyerNote", 2000)
+        && validOptionalString(data, "adminNote", 2000)
+        && validOptionalString(data, "officerNote", 2000)
+        && validDateLike(data.createdAt)
+        && validDateLike(data.updatedAt);
+    }
+
+    function validBuyerHarvestRequestCreate(data) {
+      return ownsBuyerProfile(data.buyerId)
+        && data.buyerUid == request.auth.uid
+        && data.status in ["interested", "requested"]
+        && validHarvestRequest(data);
+    }
+
+    function validBuyerHarvestRequestUpdate() {
+      return ownsBuyerProfile(resource.data.buyerId)
+        && request.resource.data.buyerId == resource.data.buyerId
+        && request.resource.data.harvestListingId == resource.data.harvestListingId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in ["interested", "requested", "cancelled"]
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["status", "buyerNote", "message", "requestedQuantity", "updatedAt"]);
+    }
+
+    function officerOwnsHarvestListing(data) {
+      return isFieldOfficer()
+        && data.officerUid == request.auth.uid
+        && data.farmPath.matches('^users/' + request.auth.uid + '/farms/[^/]+$');
+    }
+
+    match /buyers/{buyerId} {
+      allow read: if isAdmin()
+        || (isBuyer() && resource.data.uid == request.auth.uid)
+        || (isFieldOfficer() && resource.data.status == "active");
+      allow create: if isAdmin() && validBuyer(request.resource.data);
+      allow update: if validBuyer(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          isAdmin()
+          || (
+            ownsBuyerProfile(buyerId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(["contactName", "email", "phone", "address", "updatedAt"])
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.uid == resource.data.uid
+            && request.resource.data.name == resource.data.name
+          )
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /harvestListings/{listingId} {
+      allow read: if isHarvestMarketplaceParticipant() && (
+        isAdmin()
+        || (isFieldOfficer() && (
+          resource.data.officerUid == request.auth.uid
+          || (resource.data.active == true
+            && resource.data.verified == true
+            && resource.data.visibility == "public"
+            && resource.data.status == "listed")
+        ))
+        || (isBuyer()
+          && resource.data.active == true
+          && resource.data.verified == true
+          && resource.data.visibility == "public"
+          && resource.data.status == "listed")
+      );
+      allow create: if validHarvestListing(request.resource.data) && (
+        isAdmin()
+        || (
+          officerOwnsHarvestListing(request.resource.data)
+          && request.resource.data.verified == false
+          && request.resource.data.status in ["draft", "listed"]
+        )
+      );
+      allow update: if validHarvestListing(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.farmId == resource.data.farmId
+        && (
+          isAdmin()
+          || (
+            officerOwnsHarvestListing(resource.data)
+            && officerOwnsHarvestListing(request.resource.data)
+            && request.resource.data.verified == resource.data.verified
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly([
+                "farmName", "cropType", "locationText", "district",
+                "estimatedQuantityMin", "estimatedQuantityMax", "quantityUnit",
+                "harvestWindowStartDay", "harvestWindowEndDay", "harvestPeriodLabel",
+                "qualityNote", "confidence", "reliabilityLabel", "predictionSource",
+                "sourceRecommendationId", "listingOrigin", "status", "visibility",
+                "active", "adminNote", "updatedAt"
+              ])
+          )
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /harvestRequests/{requestId} {
+      allow read: if isAdmin()
+        || ownsBuyerProfile(resource.data.buyerId)
+        || (isFieldOfficer()
+          && resource.data.farmPath.matches('^users/' + request.auth.uid + '/farms/[^/]+$'));
+      allow create: if validBuyerHarvestRequestCreate(request.resource.data);
+      allow update: if validHarvestRequest(request.resource.data) && (
+        isAdmin()
+        || validBuyerHarvestRequestUpdate()
+        || (
+          isFieldOfficer()
+          && resource.data.farmPath.matches('^users/' + request.auth.uid + '/farms/[^/]+$')
+          && request.resource.data.buyerId == resource.data.buyerId
+          && request.resource.data.harvestListingId == resource.data.harvestListingId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["status", "officerNote", "updatedAt"])
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /farmAssignments/{assignmentId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && validAssignment(request.resource.data);
+      allow update: if isAdmin()
+        && validAssignment(request.resource.data)
+        && request.resource.data.assignedAt == resource.data.assignedAt;
+      allow delete: if isAdmin();
+    }
+
+    match /iotDevices/{deviceId} {
+      allow read: if isAdmin()
+        || (isFieldOfficer()
+          && resource.data.officerUid == request.auth.uid);
+      allow create: if isAdmin() && validDevice(request.resource.data);
+      allow update: if isAdmin()
+        && validDevice(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /stockTransactions/{transactionId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          "inventoryItemId", "inventoryRequestPath", "officerUid", "type",
+          "quantity", "balanceAfter", "note", "createdAt"
+        ])
+        && validShortString(request.resource.data.inventoryItemId, 128)
+        && validOptionalString(request.resource.data, "inventoryRequestPath", 500)
+        && validOptionalString(request.resource.data, "officerUid", 128)
+        && request.resource.data.type in ["addition", "removal", "adjustment", "request_approval", "issue"]
+        && request.resource.data.quantity is number
+        && request.resource.data.balanceAfter is number
+        && validOptionalString(request.resource.data, "note", 1000)
+        && validDateLike(request.resource.data.createdAt);
+      allow update, delete: if false;
+    }
+
+    match /alerts/{alertId} {
+      allow read: if isActiveUser();
+      allow create: if isAdmin() && validAlert(request.resource.data);
+      allow update: if isAdmin()
+        && validAlert(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+    }
+
+    match /recommendations/{recommendationId} {
+      allow read: if isActiveUser();
+      allow create: if validRecommendation(request.resource.data)
+        && (isAdmin() || officerOwnsRecommendation(request.resource.data));
+      allow update: if validRecommendation(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.officerUid == resource.data.officerUid
+        && (isAdmin()
+          || (officerOwnsRecommendation(request.resource.data)
+            && officerOwnsRecommendation(resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    match /diseaseCatalog/{document=**} {
+      allow read: if isActiveUser();
+      allow write: if isAdmin();
+    }
+
+    match /weatherWarnings/{document=**} {
+      allow read: if isActiveUser();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

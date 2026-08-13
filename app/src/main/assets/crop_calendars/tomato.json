@@ -1,0 +1,89 @@
+{
+  "cropId": "tomato",
+  "displayName": "Tomato",
+  "stages": [
+    {
+      "stage": "GERMINATION",
+      "dayRange": [0, 14],
+      "activities": [
+        {
+          "id": "tomato-transplant-prep",
+          "type": "FERTILIZER",
+          "title": "Transplant basal fertilizer",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Compost", "NPK Compound"],
+          "dosePerAcreKg": 40,
+          "unit": "kg",
+          "minSoilMoisture": 22,
+          "notes": "Incorporate compost before transplanting."
+        }
+      ]
+    },
+    {
+      "stage": "VEGETATIVE",
+      "dayRange": [15, 40],
+      "activities": [
+        {
+          "id": "tomato-vegetative-feed",
+          "type": "FERTILIZER",
+          "title": "Vegetative nitrogen support",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea", "Compost"],
+          "dosePerAcreKg": 25,
+          "unit": "kg",
+          "minSoilMoisture": 25,
+          "notes": "Support leaf growth before flowering. Stake plants if needed."
+        }
+      ]
+    },
+    {
+      "stage": "FLOWERING",
+      "dayRange": [41, 80],
+      "activities": [
+        {
+          "id": "tomato-flowering-feed",
+          "type": "FERTILIZER",
+          "title": "Flowering potassium support",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Potassium blend", "Compost"],
+          "dosePerAcreKg": 20,
+          "unit": "kg",
+          "minSoilMoisture": 25,
+          "notes": "Avoid over-irrigation during flowering. Scout for late blight in cool wet weather."
+        }
+      ]
+    },
+    {
+      "stage": "HARVEST_READY",
+      "dayRange": [81, 110],
+      "activities": [
+        {
+          "id": "tomato-harvest",
+          "type": "HARVEST",
+          "title": "Begin staggered harvest",
+          "productCategory": "Equipment",
+          "preferredProducts": ["Crates", "Sickle"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Pick ripe fruit regularly to reduce pest pressure."
+        }
+      ]
+    }
+  ],
+  "diseaseWatchWindows": [
+    {
+      "issueId": "tomato-late-blight",
+      "stage": "FLOWERING",
+      "dayRange": [35, 85],
+      "triggerActivity": {
+        "id": "tomato-late-blight-treatment",
+        "type": "CHEMICAL",
+        "title": "Late blight treatment",
+        "productCategory": "Chemicals",
+        "preferredProducts": ["Triazole fungicide"],
+        "doseNote": "Remove infected material and apply protectant fungicide."
+      }
+    }
+  ],
+  "harvestWindow": { "dayRange": [75, 105], "yieldPerAcreTonnesBaseline": 1.2 }
+}

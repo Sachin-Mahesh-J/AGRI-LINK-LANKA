@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/userAccess/$(request.auth.uid)).data.status == "active"
+        && firestore.get(/databases/(default)/documents/userAccess/$(request.auth.uid)).data.role in ["admin", "super_admin"];
+    }
+
+    function isOwnerImage(userId, fileName) {
+      return request.auth != null
+        && request.auth.uid == userId
+        && fileName.matches('.*\\.jpg')
+        && (
+          request.resource == null ||
+          (
+            request.resource.size < 10 * 1024 * 1024
+            && request.resource.contentType.matches('image/.*')
+          )
+        );
+    }
+
+    match /users/{userId}/reports/{fileName} {
+      allow read: if (
+          request.auth != null && request.auth.uid == userId
+        ) || isAdmin();
+      allow write, delete: if isOwnerImage(userId, fileName);
+    }
+
+    match /users/{userId}/farms/{fileName} {
+      allow read: if (
+          request.auth != null && request.auth.uid == userId
+        ) || isAdmin();
+      allow write, delete: if isOwnerImage(userId, fileName);
+    }
+
+    match /users/{userId}/farmVisits/{fileName} {
+      allow read: if (
+          request.auth != null && request.auth.uid == userId
+        ) || isAdmin();
+      allow write, delete: if isOwnerImage(userId, fileName);
+    }
+
+    // ESP32-CAM uploads (written by Cloud Functions Admin SDK; admins may delete).
+    match /iot/captures/{officerUid}/{farmId}/{deviceId}/{fileName} {
+      allow read, delete: if isAdmin();
+      allow write: if false;
+    }
+  }
+}

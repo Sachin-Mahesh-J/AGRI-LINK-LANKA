@@ -1,0 +1,148 @@
+{
+  "cropId": "rice",
+  "displayName": "Rice / Paddy",
+  "stages": [
+    {
+      "stage": "GERMINATION",
+      "dayRange": [0, 15],
+      "activities": [
+        {
+          "id": "rice-basal-fertilizer",
+          "type": "FERTILIZER",
+          "title": "Basal fertilizer application",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["NPK Compound", "Triple Superphosphate", "Compost"],
+          "dosePerAcreKg": 50,
+          "unit": "kg",
+          "minSoilMoisture": 20,
+          "notes": "Apply during land preparation or within the first week after planting."
+        },
+        {
+          "id": "rice-germination-irrigation",
+          "type": "IRRIGATION",
+          "title": "Maintain seedbed moisture",
+          "productCategory": "",
+          "preferredProducts": [],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "minSoilMoisture": 25,
+          "notes": "Keep the seedbed evenly moist until seedlings establish."
+        }
+      ]
+    },
+    {
+      "stage": "VEGETATIVE",
+      "dayRange": [16, 45],
+      "activities": [
+        {
+          "id": "rice-n-topdress-1",
+          "type": "FERTILIZER",
+          "title": "1st nitrogen top dressing",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea", "Ammonium sulphate"],
+          "dosePerAcreKg": 40,
+          "unit": "kg",
+          "minSoilMoisture": 25,
+          "notes": "Apply at active tillering. Split on sandy soils if needed."
+        },
+        {
+          "id": "rice-compost-side-dress",
+          "type": "FERTILIZER",
+          "title": "Organic side dressing (optional)",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Compost", "Organic manure"],
+          "dosePerAcreKg": 500,
+          "unit": "kg",
+          "minSoilMoisture": 20,
+          "notes": "Use compost or farmyard manure to improve soil structure during vegetative growth."
+        }
+      ]
+    },
+    {
+      "stage": "FLOWERING",
+      "dayRange": [46, 90],
+      "activities": [
+        {
+          "id": "rice-n-topdress-2",
+          "type": "FERTILIZER",
+          "title": "2nd nitrogen top dressing",
+          "productCategory": "Fertilizers",
+          "preferredProducts": ["Urea", "Potassium blend"],
+          "dosePerAcreKg": 30,
+          "unit": "kg",
+          "minSoilMoisture": 25,
+          "notes": "Apply at panicle initiation. Avoid excess nitrogen after flowering begins."
+        },
+        {
+          "id": "rice-flowering-scout",
+          "type": "GROWTH_STAGE",
+          "title": "Scout for blast and brown spot",
+          "productCategory": "Chemicals",
+          "preferredProducts": ["Triazole fungicide", "Neem oil"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "maxTemperatureCelsius": 35,
+          "notes": "Inspect leaves twice weekly. Apply registered fungicide only if symptoms are confirmed."
+        }
+      ]
+    },
+    {
+      "stage": "HARVEST_READY",
+      "dayRange": [91, 140],
+      "activities": [
+        {
+          "id": "rice-harvest-prep",
+          "type": "HARVEST",
+          "title": "Prepare for harvest",
+          "productCategory": "Equipment",
+          "preferredProducts": ["Combine harvester", "Sickle"],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Reduce irrigation 7–10 days before harvest. Record grain moisture and maturity."
+        },
+        {
+          "id": "rice-harvest-window",
+          "type": "HARVEST",
+          "title": "Harvest window open",
+          "productCategory": "",
+          "preferredProducts": [],
+          "dosePerAcreKg": 0,
+          "unit": "",
+          "notes": "Harvest when grains are firm and moisture is suitable for storage."
+        }
+      ]
+    }
+  ],
+  "diseaseWatchWindows": [
+    {
+      "issueId": "rice-blast",
+      "stage": "FLOWERING",
+      "dayRange": [40, 95],
+      "triggerActivity": {
+        "id": "rice-blast-treatment",
+        "type": "CHEMICAL",
+        "title": "Rice blast treatment",
+        "productCategory": "Chemicals",
+        "preferredProducts": ["Triazole fungicide", "Neem oil"],
+        "doseNote": "Apply per product label rate after expert confirmation."
+      }
+    },
+    {
+      "issueId": "rice-brown-spot",
+      "stage": "FLOWERING",
+      "dayRange": [35, 90],
+      "triggerActivity": {
+        "id": "rice-brown-spot-treatment",
+        "type": "CHEMICAL",
+        "title": "Brown spot treatment",
+        "productCategory": "Chemicals",
+        "preferredProducts": ["Triazole fungicide"],
+        "doseNote": "Correct nutrient stress and apply fungicide if lesions spread."
+      }
+    }
+  ],
+  "harvestWindow": {
+    "dayRange": [105, 130],
+    "yieldPerAcreTonnesBaseline": 1.5
+  }
+}
